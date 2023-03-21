@@ -4,12 +4,8 @@ Departamento de Inteligência de Dados (DID) -
 '''
 
 import PySimpleGUI as sg
-import csv
-from cryptography.fernet import Fernet
-import os
-
-chave = b'_Zzvy_C7ejhK-bHtoYFb1GdS6T7MclIlzJ6UVEZ6UvI='
-fernet = Fernet(chave)
+import csv, threading
+import os,datetime,sys
 
 filename = 'database.csv'
 
@@ -18,16 +14,9 @@ if not os.path.isfile(filename):
     # Se o arquivo não existir, cria ele
     with open(filename, mode='w', newline='') as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow([fernet.encrypt('Data de criacao'.encode()),
-                         fernet.encrypt('Nome'.encode()), fernet.encrypt('Sexo'.encode()),
-                         fernet.encrypt('Data de Nascimento'.encode()), fernet.encrypt('Nacionalidade'.encode()),
-                         fernet.encrypt('Endereço'.encode()),fernet.encrypt('Telefone'.encode()),
-                         fernet.encrypt('Email'.encode()),fernet.encrypt('Historico Profissional'.encode()),
-                         fernet.encrypt('Historico Educacional'.encode()),fernet.encrypt('Antecedentes Criminais'.encode()),
-                         fernet.encrypt('Comportamento'.encode()),fernet.encrypt('Rotina'.encode()),
-                         fernet.encrypt('Personalidade'.encode()),fernet.encrypt('Associacoes'.encode()),
-                         fernet.encrypt('Financas'.encode())])
-
+        writer.writerow(['Data de criacao','Nome','Sexo','Data de Nascimento','Nacionalidade',
+                         'Endereço','Telefone','Email','Historico Profissional','Historico Educacional',
+                         'Antecedentes Criminais','Comportamento','Rotina','Personalidade','Associacoes','Financas'])
 
 # Define a função para criar a página de Novo Registro
 def criar_pagina_novo_registro():
@@ -52,13 +41,70 @@ def criar_pagina_novo_registro():
     ]
     return sg.Window('Novo Registro', layout)
 
-# Define a função para criar a página de Buscar Registros
-def criar_pagina_buscar_registros():
-    layout = [
-        [sg.Text('Buscar Registros')],
-        # Adicione aqui os elementos para buscar registros
-    ]
-    return sg.Window('Buscar Registros', layout)
+# Define a função para criar a pagina de Buscar Registro
+def criar_pagina_buscar_registro():
+    with open(filename, mode='r') as csv_file:
+        # Lê o arquivo CSV como um dicionário
+        csv_reader = csv.DictReader(csv_file)
+
+        # Cria uma lista de nomes de registro
+        nomes, linhas = [], []
+
+        colunas = csv_reader.fieldnames
+
+        # Decodifica e adiciona os nomes na lista
+        for row in csv_reader:
+            nome = row['Nome']
+            nomes.append(nome)
+            linhas.append(row)
+
+        layout = [
+            [
+                sg.Column([
+                    [sg.Listbox(values=nomes, size=(30, 20), key='-LISTA-')],
+                ]),
+                sg.Column(layout=[[sg.Text(size=(50, 20), key='-DADOS-')]], element_justification='center')
+            ], [sg.Button('Buscar', key='-BUSCAR-')]
+        ]
+
+        window = sg.Window('Buscar Registros', layout, finalize=True)
+        window.make_modal()
+
+    # Loop principal da janela
+    while True:
+        print('hi')
+        event, values = window.read()
+        if event == sg.WINDOW_CLOSED:
+            break
+
+        if event == '-BUSCAR-':
+            # Obtém o registro selecionado
+            nome = values['-LISTA-'][0]
+
+            # Procura o registro no arquivo CSV
+            with open('database.csv', mode='r') as csv_file:
+                csv_reader = csv.DictReader(csv_file)
+                for row in csv_reader:
+                    if row['Nome'] == nome:
+                        # Decodifica os dados do registro
+                        sexo = (row['Sexo'])
+                        data_nascimento = (row['Data de Nascimento'])
+                        nacionalidade = (row['Nacionalidade'])
+                        endereco = (row['Endereço'])
+                        telefone = (row['Telefone'])
+                        email = (row['Email'])
+                        historico_profissional = (row['Historico Profissional'])
+                        historico_educacional = (row['Historico Educacional'])
+                        antecedentes_criminais = (row['Antecedentes Criminais'])
+                        comportamento = (row['Comportamento'])
+                        rotina = (row['Rotina'])
+                        personalidade = (row['Personalidade'])
+                        associacoes = (row['Associacoes'])
+                        financas = (row['Financas'])
+
+                dados = f'Nome: {nome}\nSexo: {sexo}\nData de Nascimento: {data_nascimento}\nNacionalidade: {nacionalidade}\nEndereço: {endereco}\nTelefone: {telefone}\nEmail: {email}\nHistórico Profissional: {historico_profissional}\nHistórico Educacional: {historico_educacional}\nAntecedentes Criminais: {antecedentes_criminais}\nComportamento: {comportamento}\nRotina: {rotina}\nPersonalidade: {personalidade}\nAssociais: {associacoes}\nFinanças: {financas}'
+                print(dados)
+                window['-DADOS-'].update(dados)
 
 # Define a função para criar a página de Atualizar Registros
 def criar_pagina_atualizar_registros():
@@ -87,7 +133,7 @@ layout = [
 ]
 
 # Cria a janela principal com o layout definido
-janela = sg.Window('Minha Aplicação', layout)
+janela = sg.Window('Departamento de Inteligência de Dados', layout)
 
 # Loop principal do programa
 while True:
@@ -101,42 +147,40 @@ while True:
             evento_nova_janela, valores_nova_janela = nova_janela.read()
             if evento_nova_janela == sg.WINDOW_CLOSED:
                 break
-            if evento_nova_janela == "Salvar":
-                nome = fernet.encrypt(valores_nova_janela['nome'].encode())
-                sexo = fernet.encrypt(valores_nova_janela['sexo'].encode())
-                data_nascimento = fernet.encrypt(valores_nova_janela['data_nascimento'].encode())
-                nacionalidade = fernet.encrypt(valores_nova_janela['nacionalidade'].encode())
-                endereco = fernet.encrypt(valores_nova_janela['endereco'].encode())
-                telefone = fernet.encrypt(valores_nova_janela['telefone'].encode())
-                email = fernet.encrypt(valores_nova_janela['email'].encode())
-                historico_profissional = fernet.encrypt(valores_nova_janela['historico_profissional'].encode())
-                historico_educacional = fernet.encrypt(valores_nova_janela['historico_educacional'].encode())
-                antecedentes_criminais = fernet.encrypt(valores_nova_janela['antecedentes_criminais'].encode())
-                comportamento = fernet.encrypt(valores_nova_janela['comportamento'].encode())
-                rotina = fernet.encrypt(valores_nova_janela['rotina'].encode())
-                personalidade = fernet.encrypt(valores_nova_janela['personalidade'].encode())
-                associacoes = fernet.encrypt(valores_nova_janela['associacoes'].encode())
-                financas = fernet.encrypt(valores_nova_janela['financas'].encode())
+            elif evento_nova_janela == "Salvar":
+                data_criacao    = datetime.date.today()
+                nome            = (valores_nova_janela['nome'])
+                sexo            = (valores_nova_janela['sexo'])
+                data_nascimento = (valores_nova_janela['data_nascimento'])
+                nacionalidade   = (valores_nova_janela['nacionalidade'])
+                endereco        = (valores_nova_janela['endereco'])
+                telefone        = (valores_nova_janela['telefone'])
+                email           = (valores_nova_janela['email'])
+                historico_profissional  = (valores_nova_janela['historico_profissional'])
+                historico_educacional   = (valores_nova_janela['historico_educacional'])
+                antecedentes_criminais  = (valores_nova_janela['antecedentes_criminais'])
+                comportamento           = (valores_nova_janela['comportamento'])
+                rotina                  = (valores_nova_janela['rotina'])
+                personalidade           = (valores_nova_janela['personalidade'])
+                associacoes             = (valores_nova_janela['associacoes'])
+                financas                = (valores_nova_janela['financas'])
 
                 # Abrindo o arquivo no modo de adição de novas linhas
                 with open(filename, mode='a', newline='') as csv_file:
                     writer = csv.writer(csv_file)
-                    writer.writerow([nome,sexo,data_nascimento,nacionalidade,endereco,telefone,
+                    writer.writerow([data_criacao,nome,sexo,data_nascimento,nacionalidade,endereco,telefone,
                                      email,historico_profissional,historico_educacional,
                                      antecedentes_criminais,comportamento,rotina,personalidade,
                                      associacoes,financas])
+
+            elif evento_nova_janela == "Cancelar":
+                break
 
             # Adicione aqui o código para processar os eventos da página de Novo Registro
         nova_janela.close()
 
     elif evento == 'Buscar Registros':
-        nova_janela = criar_pagina_buscar_registros()
-        while True:
-            evento_nova_janela, valores_nova_janela = nova_janela.read()
-            if evento_nova_janela == sg.WINDOW_CLOSED:
-                break
-            # Adicione aqui o código para processar os eventos da página de Buscar Registros
-        nova_janela.close()
+        criar_pagina_buscar_registro()
 
     elif evento == 'Atualizar Registros':
         nova_janela = criar_pagina_atualizar_registros()
